@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM Event + Fetch</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<style>
+    button{
+        padding: 10px 15px;
+        margin-left: 5px;
+        cursor: pointer;
+        color: black;
+        font-size: 17px;
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        background-color: rgb(193, 142, 124);
+    }
+    table {
+        border-collapse: collapse;
+        width: 70%;
+        margin: 0 auto;
+    }        
+    th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    th {
+        /* background-color:  rgb(202, 195, 193); */
+        background-color: rgb(217, 213, 213) ;
+    }
+    tr:hover {
+            background-color: #f5f5f5;
+    }
+</style>
+<body>
+    <button id="button_1" style="margin: 10px 100px;">Show Records</button>
+    <button id="button_2">Remove Records</button>
+    <table id="data_display" border="2" style="margin-top: 20px;"></table>
+    <script type="text/javascript">
+            let show_data = async () => {
+            let response = await fetch("https://jsonplaceholder.typicode.com/users");
+            let data = await response.json();
+            localStorage.setItem('Stored_api', JSON.stringify(data));
+            return data;
+    };
+
+    let get_Data = () => JSON.parse(localStorage.getItem('Stored_api'));
+
+    let display_Data = () => {
+        let show = get_Data();    
+        let stored_data = document.getElementById('data_display');
+        stored_data.innerHTML = '';
+        if (Array.isArray(show) && show.length > 0) {
+             // Create Add button
+            let addButton = document.createElement('button');
+            addButton.textContent = 'Add';
+            addButton.addEventListener('click', () => {
+                add_Data();
+            });
+            stored_data.appendChild(addButton);
+            // Create heading row
+                let headingRow = document.createElement('tr');
+                let headingIdCell = document.createElement('th');
+                headingIdCell.textContent = 'ID';
+                headingRow.appendChild(headingIdCell);
+                let headingTitleCell = document.createElement('th');
+                headingTitleCell.textContent = 'Name';
+                headingRow.appendChild(headingTitleCell);
+                let headingBodyCell = document.createElement('th');
+                headingBodyCell.textContent = 'Username';
+                headingRow.appendChild(headingBodyCell);
+                let headingEmailCell = document.createElement('th');
+                headingEmailCell.textContent = 'Email';
+                headingRow.appendChild(headingEmailCell);
+                let headingActionsCell = document.createElement('th');
+                headingActionsCell.textContent = 'Actions';
+                headingRow.appendChild(headingActionsCell);
+                stored_data.appendChild(headingRow);
+            show.map(val => {
+                let row = document.createElement('tr');
+                let userId = document.createElement('td');
+                userId.textContent = val.id;
+                row.appendChild(userId);
+                let title = document.createElement('td');
+                title.textContent = val.name;
+                row.appendChild(title);
+                let username = document.createElement('td');
+                username.textContent = val.username;
+                row.appendChild(username);
+                let email = document.createElement('td');
+                email.textContent = val.email;
+                row.appendChild(email);
+
+                // Create update button
+                let updateButton = document.createElement('button');
+                updateButton.textContent = 'Update';
+                updateButton.addEventListener('click', () => {
+                    update_Data(val);
+                });
+                row.appendChild(updateButton);
+                // Create delete button
+                let deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete'
+                deleteButton.addEventListener('click', () => {
+                    clear_data(val);
+                });
+                row.appendChild(deleteButton);
+
+                stored_data.appendChild(row);
+            });
+        }
+    };
+
+    let update_Data = (u_data) => {
+        let updateId = prompt('Enter updated Id:', u_data.id);
+        // Check if the updated ID contains only numbers
+        if (updateId && /^\d+$/.test(updateId)) {
+            let updatedTitle = prompt('Enter updated Name:', u_data.name);
+            let updatedUsername = prompt('Enter updated Username:', u_data.username);
+            let updatedEmail = prompt('Enter updated Email:', u_data.email);
+
+            if (updatedTitle && updatedUsername && updatedEmail) {
+                let updatedData = {
+                    id: updateId,
+                    name: updatedTitle,
+                    username: updatedUsername,
+                    email: updatedEmail
+                };
+                let show = get_Data();
+                let index = show.findIndex(main => main.id === u_data.id);
+                if (index !== -1) {
+                    show[index] = updatedData;
+                    localStorage.setItem('Stored_api', JSON.stringify(show));
+                    display_Data();
+                }
+            }
+        } else {
+            alert('Please enter a valid updated ID (numbers only).');
+        }
+    };
+
+    let clear_data = (C_data) => {
+        let show = get_Data();
+        let index = show.findIndex(main => main.id === C_data.id);
+        if (index !== -1) {
+            show.splice(index, 1);
+            localStorage.setItem('Stored_api', JSON.stringify(show));
+            display_Data();
+        }
+    };
+
+    let add_Data = () => {
+        let addedId = prompt('Enter ID:');
+        // Check if the entered ID contains only numbers
+        if (addedId && /^\d+$/.test(addedId)) {
+            let addedName = prompt('Enter Name:');
+            let addedUsername = prompt('Enter Username:');
+            let addedEmail = prompt('Enter Email:');
+
+            if (addedName && addedUsername && addedEmail) {
+                let addedData = {
+                    id: addedId,
+                    name: addedName,
+                    username: addedUsername,
+                    email: addedEmail,
+                };
+                let show = get_Data();
+                show.push(addedData);
+                localStorage.setItem('Stored_api', JSON.stringify(show));
+                display_Data();
+            }
+        } else {
+            alert('Please enter a valid ID (numbers only).');
+        }
+    };
+    //-button 
+    let btn_1_Click = async () => {
+        await show_data();
+        display_Data();
+    };
+    let btn_2_Click = () => {
+        localStorage.removeItem('Stored_api');
+        display_Data();
+        alert("data removed");
+    };
+    document.getElementById('button_1').addEventListener('click', btn_1_Click);
+    document.getElementById('button_2').addEventListener('click', btn_2_Click);
+    </script>
+</body>
+</html>
